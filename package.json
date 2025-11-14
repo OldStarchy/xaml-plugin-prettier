@@ -1,0 +1,16 @@
+{
+	"name": "xaml-plugin-prettier",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"license": "MIT",
+	"dependencies": {
+		"@xml-tools/parser": "^1.0.11",
+		"prettier": "^3.6.2",
+		"typescript": "^5.9.3"
+	},
+	"scripts": {
+		"build": "tsc",
+		"test": "echo \"No tests specified\" && exit 0",
+		"postinstall": "tsc"
+	}
+}
