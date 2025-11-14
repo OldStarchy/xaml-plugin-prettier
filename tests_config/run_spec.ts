@@ -120,7 +120,7 @@ function raw(string: string): RawSnapshot {
 function mergeDefaultOptions(parserConfig: Partial<Options>): TestOptions {
 	return Object.assign(
 		{
-			plugins: [path.dirname(__dirname)],
+			plugins: [path.join(path.dirname(__dirname), 'src', 'index.ts')],
 			printWidth: 80,
 		},
 		parserConfig
