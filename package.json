@@ -1,6 +1,7 @@
 {
 	"name": "xaml-plugin-prettier",
 	"version": "1.0.0",
+	"type": "module",
 	"main": "dist/index.js",
 	"license": "MIT",
 	"dependencies": {
@@ -9,8 +10,17 @@
 		"typescript": "^5.9.3"
 	},
 	"scripts": {
-		"build": "tsc",
-		"test": "echo \"No tests specified\" && exit 0",
-		"postinstall": "tsc"
+		"build": "tsc --project tsconfig.build.json",
+		"test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+		"postinstall": "tsc --project tsconfig.build.json"
+	},
+	"devDependencies": {
+		"@babel/preset-typescript": "^7.28.5",
+		"@jest/globals": "^30.2.0",
+		"@types/jest": "^30.0.0",
+		"@types/node": "^24.10.1",
+		"jest": "^30.2.0",
+		"jest-watch-typeahead": "^3.0.1",
+		"ts-jest": "^29.4.5"
 	}
 }
