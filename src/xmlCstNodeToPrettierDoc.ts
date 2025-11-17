@@ -62,10 +62,8 @@ function convertElement(element: CstNode): Doc {
 			const items: Array<{
 				offset: number;
 				node: CstNode | Token;
-				type: 'element' | 'comment' | 'chardata';
-			}> = [];
-
-			// Collect all items
+				type: 'element' | 'comment' | 'chardata' | 'reference';
+			}> = []; // Collect all items
 			if (contentChildren.element) {
 				for (const el of contentChildren.element as CstNode[]) {
 					items.push({
@@ -93,30 +91,89 @@ function convertElement(element: CstNode): Doc {
 					});
 				}
 			}
+			if (contentChildren.reference) {
+				for (const reference of contentChildren.reference as CstNode[]) {
+					items.push({
+						offset: reference.location!.startOffset,
+						node: reference,
+						type: 'reference',
+					});
+				}
+			}
 
 			// Sort by offset
 			items.sort((a, b) => a.offset - b.offset);
 
 			// Process items
-			for (const item of items) {
+			for (let i = 0; i < items.length; i++) {
+				const item = items[i]!;
+
 				if (item.type === 'element') {
 					contentParts.push(softline);
 					contentParts.push(convertElement(item.node as CstNode));
 				} else if (item.type === 'comment') {
 					contentParts.push(softline);
 					contentParts.push((item.node as Token).image);
-				} else if (item.type === 'chardata') {
-					const chardata = item.node as CstNode;
-					const textContent = extractTextFromChardata(chardata);
+				} else if (
+					item.type === 'chardata' ||
+					item.type === 'reference'
+				) {
+					// Collect consecutive chardata and reference nodes into a text run
+					const textRun: string[] = [];
+					let j = i;
 
-					if (textContent) {
-						contentParts.push(softline);
-						contentParts.push(textContent);
-					} else if (checkForEmptyLine(chardata)) {
-						// Preserve empty line (multiple newlines in source)
-						contentParts.push(hardline);
+					while (
+						j < items.length &&
+						(items[j]!.type === 'chardata' ||
+							items[j]!.type === 'reference')
+					) {
+						const currentItem = items[j]!;
+
+						if (currentItem.type === 'chardata') {
+							const chardata = currentItem.node as CstNode;
+							const rawText =
+								extractRawTextFromChardata(chardata);
+							if (rawText !== null) {
+								textRun.push(rawText);
+							}
+						} else if (currentItem.type === 'reference') {
+							const reference = currentItem.node as CstNode;
+							const refText = extractTextFromReference(reference);
+							if (refText) {
+								textRun.push(refText);
+							}
+						}
+
+						j++;
 					}
-					// Note: Other whitespace-only chardata is skipped
+
+					// Process the complete text run
+					if (textRun.length > 0) {
+						const fullText = textRun.join('');
+						const trimmed = fullText.trim();
+
+						if (trimmed) {
+							// Normalize whitespace while preserving entity references
+							const normalized = fullText
+								.split('\n')
+								.map((line) => line.trim())
+								.join(' ')
+								.trim();
+
+							contentParts.push(softline);
+							contentParts.push(normalized);
+						} else if (
+							i < items.length &&
+							items[i]!.type === 'chardata' &&
+							checkForEmptyLine(items[i]!.node as CstNode)
+						) {
+							// Preserve empty line
+							contentParts.push(hardline);
+						}
+					}
+
+					// Skip the items we've already processed
+					i = j - 1;
 				}
 			}
 		}
@@ -133,6 +190,36 @@ function convertElement(element: CstNode): Doc {
 	return contentParts.length > 0
 		? [openTag, indent(contentParts), softline, closeTag]
 		: group([openTag, indent(contentParts), softline, closeTag]);
+}
+
+function extractTextFromReference(reference: CstNode): string | null {
+	const children = reference.children;
+	if (!children) return null;
+
+	// Get entity or character reference
+	const entityRef = (children.EntityRef as Token[]) || [];
+	const charRef = (children.CharRef as Token[]) || [];
+
+	const allRefs = [...entityRef, ...charRef];
+	if (allRefs.length === 0) return null;
+
+	// Return the entity/char reference as-is (e.g., "&amp;", "&#38;")
+	return allRefs[0]!.image;
+}
+
+function extractRawTextFromChardata(chardata: CstNode): string | null {
+	const children = chardata.children;
+	if (!children) return null;
+
+	// Get text content from TEXT or SEA_WS tokens
+	const textTokens = (children.TEXT as Token[]) || [];
+	const wsTokens = (children.SEA_WS as Token[]) || [];
+
+	const allTokens = [...textTokens, ...wsTokens];
+	if (allTokens.length === 0) return null;
+
+	// Return raw text without any normalization
+	return allTokens.map((t) => t.image).join('');
 }
 
 function extractTextFromChardata(chardata: CstNode): string | null {

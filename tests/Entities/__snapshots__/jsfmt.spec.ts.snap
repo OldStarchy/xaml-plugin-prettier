@@ -1,0 +1,12 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`entity-preservation.xaml 1`] = `
+<Label Grid.Column="2">
+    Night &amp; NVG
+</Label>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<Label Grid.Column="2">
+  Night &amp; NVG
+</Label>
+
+`;
