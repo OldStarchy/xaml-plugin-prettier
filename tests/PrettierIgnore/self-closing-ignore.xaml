@@ -1,0 +1,10 @@
+<Grid xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+    <!-- Normal formatting -->
+    <TextBlock Text="Normal" Margin="5" />
+
+    <!-- prettier-ignore -->
+    <Button   Content="Ignored"   Width="100"    Height="50"  />
+
+    <!-- Another normal element -->
+    <Label Content="Normal again" />
+</Grid>

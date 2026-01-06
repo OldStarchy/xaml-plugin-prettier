@@ -1,5 +1,5 @@
-import { type CstNode, type IToken as Token } from 'chevrotain';
-import { doc, type Doc, type Printer } from 'prettier';
+import {type CstNode, type IToken as Token} from 'chevrotain';
+import {doc, type Doc, type Printer} from 'prettier';
 
 const { group, hardline, indent, line, softline } = doc.builders;
 
@@ -7,7 +7,34 @@ const empty: Doc = '';
 
 type PrintFn = Printer<CstNode>['print'];
 
-const xmlCstNodeToPrettierDoc: PrintFn = (path, _options, _print): Doc => {
+// Helper function to check if a comment contains prettier-ignore directive
+function isPrettierIgnoreComment(comment: Token): string | null {
+	const content = comment.image.trim();
+	// Check for both XML comment style <!-- prettier-ignore --> and shorter variations
+	if (content.includes('prettier-ignore')) {
+		return content;
+	}
+	return null;
+}
+
+// Helper function to extract original text for a node from the source
+function getOriginalText(node: CstNode, options: any): string {
+	const location = node.location;
+	if (!location) return '';
+
+	// Get the original text from options
+	const originalText = options.originalText || options.text;
+	if (typeof originalText === 'string') {
+		const start = location.startOffset;
+		const end = location.endOffset ?? location.startOffset;
+		return originalText.slice(start, end + 1);
+	}
+
+	// Fallback: try to reconstruct from the tokens within this node
+	return '<!-- Unable to preserve original formatting -->';
+}
+
+const xmlCstNodeToPrettierDoc: PrintFn = (path, options, _print): Doc => {
 	const cst = path.node;
 
 	const elements = cst.children?.element as CstNode[];
@@ -15,15 +42,20 @@ const xmlCstNodeToPrettierDoc: PrintFn = (path, _options, _print): Doc => {
 		return empty;
 	}
 
-	return [convertElement(elements[0]!), hardline];
+	return [convertElement(elements[0]!, options, false), hardline];
 };
 
 export default xmlCstNodeToPrettierDoc;
 
-function convertElement(element: CstNode): Doc {
+function convertElement(element: CstNode, options: any, shouldIgnore: boolean = false): Doc {
 	const children = element.children;
 	if (!children) {
 		return empty;
+	}
+
+	// If we should ignore this element, return its original text
+	if (shouldIgnore) {
+		return getOriginalText(element, options);
 	}
 
 	// Get element name
@@ -105,15 +137,25 @@ function convertElement(element: CstNode): Doc {
 			items.sort((a, b) => a.offset - b.offset);
 
 			// Process items
+			let nextElementShouldIgnore = false;
+
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i]!;
 
 				if (item.type === 'element') {
 					contentParts.push(softline);
-					contentParts.push(convertElement(item.node as CstNode));
+					contentParts.push(convertElement(item.node as CstNode, options, nextElementShouldIgnore));
+					// Reset the ignore flag after using it
+					nextElementShouldIgnore = false;
 				} else if (item.type === 'comment') {
+					const commentToken = item.node as Token;
 					contentParts.push(softline);
-					contentParts.push((item.node as Token).image);
+					contentParts.push(commentToken.image);
+
+					// Check if this comment is a prettier-ignore directive
+					if (isPrettierIgnoreComment(commentToken)) {
+						nextElementShouldIgnore = true;
+					}
 				} else if (
 					item.type === 'chardata' ||
 					item.type === 'reference'

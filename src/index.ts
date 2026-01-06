@@ -1,5 +1,5 @@
-import { parse } from '@xml-tools/parser';
-import { type CstNode } from 'chevrotain';
+import {parse} from '@xml-tools/parser';
+import {type CstNode} from 'chevrotain';
 import {
 	type Options,
 	type Parser,
@@ -23,9 +23,12 @@ export const languages: SupportLanguage[] = [
 const XamlParser: Parser<
 	CstNode & { location: Exclude<CstNode['location'], undefined> }
 > = {
-	parse: async (text, _options) => {
+	parse: async (text, options) => {
 		// Since we already have a CST to DocTree converter, we can leverage it here.
 		const { cst } = parse(text);
+
+		// Store the original text in the options for prettier-ignore functionality
+		(options as any).originalText = text;
 
 		return cst as CstNode & {
 			location: Exclude<CstNode['location'], undefined>;

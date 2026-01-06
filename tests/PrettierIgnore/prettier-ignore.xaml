@@ -1,0 +1,23 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <StackPanel>
+        <!-- This element should be formatted normally -->
+        <TextBlock Text="Formatted text"    Margin="10,5"   FontSize="14" />
+
+        <!-- prettier-ignore -->
+        <TextBox  Text="This should NOT be formatted"   Width="200"    Height="30"    Background="Red"/>
+
+        <!-- This should be formatted again -->
+        <Button Content="Formatted button" Margin="10" Padding="5,2" />
+
+        <!-- prettier-ignore -->
+        <Border BorderBrush="Blue"   BorderThickness="2">
+            <Label Content="Ignored formatting"    FontWeight="Bold"/>
+        </Border>
+
+        <!-- Normal formatting resumes -->
+        <CheckBox Content="Normal checkbox" IsChecked="True" />
+    </StackPanel>
+
+</Window>
