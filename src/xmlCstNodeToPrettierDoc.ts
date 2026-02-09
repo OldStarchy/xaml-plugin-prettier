@@ -1,5 +1,5 @@
-import {type CstNode, type IToken as Token} from 'chevrotain';
-import {doc, type Doc, type Printer} from 'prettier';
+import { type CstNode, type IToken as Token } from 'chevrotain';
+import { doc, type Doc, type Printer } from 'prettier';
 
 const { group, hardline, indent, line, softline } = doc.builders;
 
@@ -47,7 +47,11 @@ const xmlCstNodeToPrettierDoc: PrintFn = (path, options, _print): Doc => {
 
 export default xmlCstNodeToPrettierDoc;
 
-function convertElement(element: CstNode, options: any, shouldIgnore: boolean = false): Doc {
+function convertElement(
+	element: CstNode,
+	options: any,
+	shouldIgnore: boolean = false,
+): Doc {
 	const children = element.children;
 	if (!children) {
 		return empty;
@@ -144,7 +148,13 @@ function convertElement(element: CstNode, options: any, shouldIgnore: boolean = 
 
 				if (item.type === 'element') {
 					contentParts.push(softline);
-					contentParts.push(convertElement(item.node as CstNode, options, nextElementShouldIgnore));
+					contentParts.push(
+						convertElement(
+							item.node as CstNode,
+							options,
+							nextElementShouldIgnore,
+						),
+					);
 					// Reset the ignore flag after using it
 					nextElementShouldIgnore = false;
 				} else if (item.type === 'comment') {
@@ -329,14 +339,14 @@ function convertAttributes(attributes: CstNode[]): Doc {
 			first = false;
 		}
 
-		const value = convertAttributeValue(attrValue);
+		const value = convertAttributeValue(attrValue, attrName);
 		parts.push(group([`${attrName}=`, value]));
 	}
 
 	return [indent([' ', softline, ...parts])];
 }
 
-function convertAttributeValue(value: string): Doc {
+function convertAttributeValue(value: string, attrName: string): Doc {
 	// Remove quotes
 	const match = /^(['"])(.+)\1$/s.exec(value);
 	if (!match) {
@@ -354,14 +364,21 @@ function convertAttributeValue(value: string): Doc {
 
 	// For regular attribute values, check if they should be split
 	// Split on whitespace for long values
-	const words = content.split(/\s+/);
-	if (words.length > 1 && content.length > 40) {
-		return group([
-			quote,
-			indent([softline, ...words.flatMap((w) => [w, line]).slice(0, -1)]),
-			softline,
-			quote,
-		]);
+	if (attrName.toLowerCase() === 'class') {
+		const words = content.split(/\s+/);
+		if (words.length > 1 && content.length > 40) {
+			return group([
+				quote,
+				indent([
+					softline,
+					...words.flatMap((w) => [w, line]).slice(0, -1),
+				]),
+				softline,
+				quote,
+			]);
+		}
+	} else {
+		return [quote, content, quote];
 	}
 
 	return value;
@@ -450,7 +467,7 @@ function parseBindingThings(str: string, head: number): Doc {
 					}
 				})
 				.flatMap((p, i) =>
-					i < parts.length - 1 ? [p, ',', line] : [p]
+					i < parts.length - 1 ? [p, ',', line] : [p],
 				),
 		]),
 		softline,

@@ -24,7 +24,7 @@
         </Style>
     </Window.Resources>
 
-    <Grid Margin="10,10,10,10">
+    <Grid Margin="10,10,10,10" DontWrapThisAttr="This is a very long attribute with lots of words that shouldn't be wrapped by word" class="This is a class attribute that should be wrapped per word because its a class though its probably not relevant to xaml files since its not html">
         <!-- Main Layout -->
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
