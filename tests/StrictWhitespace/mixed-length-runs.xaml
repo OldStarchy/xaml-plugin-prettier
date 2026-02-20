@@ -1,0 +1,3 @@
+<TextBlock>
+    <Run Text="Short" /><Run Text="This is a very long text attribute that should definitely cause wrapping because it exceeds reasonable line length limits and should force all adjacent elements to wrap consistently" /><Run Text="Short2" />
+</TextBlock>

@@ -68,6 +68,40 @@ exports[`comprehensive-test.xaml 1`] = `
 
 `;
 
+exports[`mixed-length-runs.xaml 1`] = `
+<TextBlock>
+    <Run Text="Short" /><Run Text="This is a very long text attribute that should definitely cause wrapping because it exceeds reasonable line length limits and should force all adjacent elements to wrap consistently" /><Run Text="Short2" />
+</TextBlock>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<TextBlock>
+  <Run
+    Text="Short"
+  /><Run
+    Text="This is a very long text attribute that should definitely cause wrapping because it exceeds reasonable line length limits and should force all adjacent elements to wrap consistently"
+  /><Run
+    Text="Short2"
+  />
+</TextBlock>
+
+`;
+
+exports[`textblock-runs.xaml 1`] = `
+<Window>
+    <TextBlock>
+        <Run Text="Maximum Weight (" /><Run Text="{Binding WeightUnitLabel, Mode=OneWay}" /><Run Text=")" />
+    </TextBlock>
+</Window>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+<Window>
+  <TextBlock>
+    <Run Text="Maximum Weight (" /><Run
+      Text="{Binding WeightUnitLabel, Mode=OneWay}"
+    /><Run Text=")" />
+  </TextBlock>
+</Window>
+
+`;
+
 exports[`wide-adjacent-elements.xaml 1`] = `
 <Root>
   <!-- Test with very long attribute values that should force wrapping -->

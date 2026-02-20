@@ -42,15 +42,60 @@ const xmlCstNodeToPrettierDoc: PrintFn = (path, options, _print): Doc => {
 		return empty;
 	}
 
-	return [convertElement(elements[0]!, options, false), hardline];
+	return [convertElement(elements[0]!, options, false, false), hardline];
 };
 
 export default xmlCstNodeToPrettierDoc;
+
+// Helper function to determine if an element needs wrapping due to long attributes
+function elementNeedsWrapping(element: CstNode): boolean {
+	const children = element.children;
+	if (!children) return false;
+
+	const elementName = (children.Name as Token[])?.[0]?.image || '';
+	const attributes = children.attribute as CstNode[];
+
+	if (!attributes || attributes.length === 0) return false;
+
+	// Calculate approximate line length for this element
+	let estimatedLength = elementName.length + 2; // < and >
+
+	for (const attr of attributes) {
+		const attrChildren = attr.children;
+		if (!attrChildren) continue;
+
+		const nameTokens = attrChildren.Name as Token[];
+		const stringTokens = attrChildren.STRING as Token[];
+
+		if (nameTokens && stringTokens) {
+			const attrName = nameTokens[0]?.image || '';
+			const attrValue = stringTokens[0]?.image || '';
+			estimatedLength += attrName.length + attrValue.length + 2; // = and space
+		}
+	}
+
+	// Use a more conservative line length threshold (120 characters)
+	// and require multiple attributes or a very long single attribute
+	const hasMultipleAttributes = attributes.length > 1;
+	const hasVeryLongAttribute = attributes.some((attr) => {
+		const attrChildren = attr.children;
+		if (!attrChildren) return false;
+		const stringTokens = attrChildren.STRING as Token[];
+		return (stringTokens?.[0]?.image?.length ?? 0) > 60;
+	});
+
+	return (
+		estimatedLength > 120 ||
+		(hasMultipleAttributes && estimatedLength > 80) ||
+		hasVeryLongAttribute
+	);
+}
 
 function convertElement(
 	element: CstNode,
 	options: any,
 	shouldIgnore: boolean = false,
+	forceWrap: boolean = false,
 ): Doc {
 	const children = element.children;
 	if (!children) {
@@ -73,16 +118,20 @@ function convertElement(
 	const attributes = children.attribute as CstNode[];
 	const attrDoc =
 		attributes && attributes.length > 0
-			? convertAttributes(attributes)
+			? convertAttributes(attributes, forceWrap)
 			: null;
 
 	// Check if self-closing
 	const isSelfClosing = !!(children.SLASH_CLOSE as Token[]);
 
 	if (isSelfClosing) {
-		return attrDoc === null
-			? `<${elementName} />`
-			: group([`<${elementName}`, attrDoc, line, '/>']);
+		if (attrDoc === null) {
+			return `<${elementName} />`;
+		} else if (forceWrap) {
+			return group([`<${elementName}`, attrDoc, hardline, '/>']);
+		} else {
+			return group([`<${elementName}`, attrDoc, line, '/>']);
+		}
 	}
 
 	// Get content
@@ -140,107 +189,197 @@ function convertElement(
 			// Sort by offset
 			items.sort((a, b) => a.offset - b.offset);
 
-			// Process items
-			let nextElementShouldIgnore = false;
+			// Group adjacent elements and determine if any group needs wrapping
+			const elementGroups: Array<{
+				items: Array<{
+					offset: number;
+					node: CstNode | Token;
+					type: 'element' | 'comment' | 'chardata' | 'reference';
+				}>;
+				shouldForceWrap: boolean;
+			}> = [];
 
+			let currentGroup: Array<{
+				offset: number;
+				node: CstNode | Token;
+				type: 'element' | 'comment' | 'chardata' | 'reference';
+			}> = [];
+
+			// First pass: group adjacent elements
 			for (let i = 0; i < items.length; i++) {
 				const item = items[i]!;
 
 				if (item.type === 'element') {
-					// Check if this element is adjacent to a previous element
-					// (i.e., no text content between them)
-					const isAdjacentToElement =
-						i > 0 && items[i - 1]!.type === 'element';
+					currentGroup.push(item);
+				} else {
+					// Non-element items end the current group ONLY if it's not text/reference content
+					if (currentGroup.length > 0) {
+						// Check if any element in this group needs wrapping
+						const shouldForceWrap = currentGroup.some(
+							(groupItem) => {
+								const element = groupItem.node as CstNode;
+								return elementNeedsWrapping(element);
+							},
+						);
 
-					// Only add softline if this is not adjacent to another element
-					if (!isAdjacentToElement) {
-						contentParts.push(softline);
-					}
-					contentParts.push(
-						convertElement(
-							item.node as CstNode,
-							options,
-							nextElementShouldIgnore,
-						),
-					);
-					// Reset the ignore flag after using it
-					nextElementShouldIgnore = false;
-				} else if (item.type === 'comment') {
-					const commentToken = item.node as Token;
-					// Check if this comment is adjacent to a previous element
-					const isAdjacentToElement =
-						i > 0 && items[i - 1]!.type === 'element';
-
-					// Only add softline if this is not adjacent to another element
-					if (!isAdjacentToElement) {
-						contentParts.push(softline);
-					}
-					contentParts.push(commentToken.image);
-
-					// Check if this comment is a prettier-ignore directive
-					if (isPrettierIgnoreComment(commentToken)) {
-						nextElementShouldIgnore = true;
-					}
-				} else if (
-					item.type === 'chardata' ||
-					item.type === 'reference'
-				) {
-					// Collect consecutive chardata and reference nodes into a text run
-					const textRun: string[] = [];
-					let j = i;
-
-					while (
-						j < items.length &&
-						(items[j]!.type === 'chardata' ||
-							items[j]!.type === 'reference')
-					) {
-						const currentItem = items[j]!;
-
-						if (currentItem.type === 'chardata') {
-							const chardata = currentItem.node as CstNode;
-							const rawText =
-								extractRawTextFromChardata(chardata);
-							if (rawText !== null) {
-								textRun.push(rawText);
-							}
-						} else if (currentItem.type === 'reference') {
-							const reference = currentItem.node as CstNode;
-							const refText = extractTextFromReference(reference);
-							if (refText) {
-								textRun.push(refText);
-							}
-						}
-
-						j++;
+						elementGroups.push({
+							items: [...currentGroup],
+							shouldForceWrap,
+						});
+						currentGroup = [];
 					}
 
-					// Process the complete text run
-					if (textRun.length > 0) {
-						const fullText = textRun.join('');
-						const trimmed = fullText.trim();
+					// Process non-element item immediately, but group consecutive text/reference items together
+					if (item.type === 'chardata' || item.type === 'reference') {
+						const textGroup = [item];
+						let j = i + 1;
 
-						if (trimmed) {
-							// Normalize whitespace while preserving entity references
-							const normalized = fullText
-								.split('\n')
-								.map((line) => line.trim())
-								.join(' ')
-								.trim();
-
-							contentParts.push(softline);
-							contentParts.push(normalized);
-						} else if (
-							i < items.length &&
-							items[i]!.type === 'chardata' &&
-							checkForEmptyLine(items[i]!.node as CstNode)
+						// Collect consecutive chardata/reference items
+						while (
+							j < items.length &&
+							(items[j]!.type === 'chardata' ||
+								items[j]!.type === 'reference')
 						) {
-							// Preserve empty line
-							contentParts.push(hardline);
+							textGroup.push(items[j]!);
+							j++;
 						}
-					}
 
-					// Skip the items we've already processed
-					i = j - 1;
+						elementGroups.push({
+							items: textGroup,
+							shouldForceWrap: false,
+						});
+
+						// Skip the items we've processed
+						i = j - 1;
+					} else {
+						// Comment or other non-element item
+						elementGroups.push({
+							items: [item],
+							shouldForceWrap: false,
+						});
+					}
+				}
+			}
+
+			// Handle any remaining group
+			if (currentGroup.length > 0) {
+				const shouldForceWrap = currentGroup.some((groupItem) => {
+					const element = groupItem.node as CstNode;
+					return elementNeedsWrapping(element);
+				});
+
+				elementGroups.push({
+					items: [...currentGroup],
+					shouldForceWrap,
+				});
+			}
+
+			// Process groups
+			let nextElementShouldIgnore = false;
+
+			for (const group of elementGroups) {
+				for (let i = 0; i < group.items.length; i++) {
+					const item = group.items[i]!;
+
+					if (item.type === 'element') {
+						// Check if this element is adjacent to a previous element
+						const isAdjacentToElement =
+							i > 0 && group.items[i - 1]!.type === 'element';
+
+						// Only add softline if this is not adjacent to another element
+						if (!isAdjacentToElement) {
+							contentParts.push(softline);
+						}
+						contentParts.push(
+							convertElement(
+								item.node as CstNode,
+								options,
+								nextElementShouldIgnore,
+								group.shouldForceWrap,
+							),
+						);
+						// Reset the ignore flag after using it
+						nextElementShouldIgnore = false;
+					} else if (item.type === 'comment') {
+						const commentToken = item.node as Token;
+						// Check if this comment is adjacent to a previous element
+						const isAdjacentToElement =
+							i > 0 && group.items[i - 1]!.type === 'element';
+
+						// Only add softline if this is not adjacent to another element
+						if (!isAdjacentToElement) {
+							contentParts.push(softline);
+						}
+						contentParts.push(commentToken.image);
+
+						// Check if this comment is a prettier-ignore directive
+						if (isPrettierIgnoreComment(commentToken)) {
+							nextElementShouldIgnore = true;
+						}
+					} else if (
+						item.type === 'chardata' ||
+						item.type === 'reference'
+					) {
+						// Collect consecutive chardata and reference nodes into a text run
+						const textRun: string[] = [];
+						let j = i;
+
+						while (
+							j < group.items.length &&
+							(group.items[j]!.type === 'chardata' ||
+								group.items[j]!.type === 'reference')
+						) {
+							const currentItem = group.items[j]!;
+
+							if (currentItem.type === 'chardata') {
+								const chardata = currentItem.node as CstNode;
+								const rawText =
+									extractRawTextFromChardata(chardata);
+								if (rawText !== null) {
+									textRun.push(rawText);
+								}
+							} else if (currentItem.type === 'reference') {
+								const reference = currentItem.node as CstNode;
+								const refText =
+									extractTextFromReference(reference);
+								if (refText) {
+									textRun.push(refText);
+								}
+							}
+
+							j++;
+						}
+
+						// Process the complete text run
+						if (textRun.length > 0) {
+							const fullText = textRun.join('');
+							const trimmed = fullText.trim();
+
+							if (trimmed) {
+								// Normalize whitespace while preserving entity references
+								const normalized = fullText
+									.split('\n')
+									.map((line) => line.trim())
+									.join(' ')
+									.trim();
+
+								contentParts.push(softline);
+								contentParts.push(normalized);
+							} else if (
+								i < group.items.length &&
+								group.items[i]!.type === 'chardata' &&
+								checkForEmptyLine(
+									group.items[i]!.node as CstNode,
+								)
+							) {
+								// Preserve empty line
+								contentParts.push(hardline);
+							}
+						}
+
+						// Skip the items we've already processed
+						i = j - 1;
+					}
 				}
 			}
 		}
@@ -249,7 +388,9 @@ function convertElement(
 	const openTag =
 		attrDoc === null
 			? `<${elementName}>`
-			: group([`<${elementName}`, attrDoc, softline, '>']);
+			: forceWrap
+				? group([`<${elementName}`, attrDoc, hardline, '>'])
+				: group([`<${elementName}`, attrDoc, softline, '>']);
 
 	const closeTag = `</${elementName}>`;
 
@@ -332,9 +473,34 @@ function checkForEmptyLine(chardata: CstNode): boolean {
 	return newlineCount >= 2;
 }
 
-function convertAttributes(attributes: CstNode[]): Doc {
+function convertAttributes(
+	attributes: CstNode[],
+	forceWrap: boolean = false,
+): Doc {
 	const parts: Doc[] = [];
 	let first = true;
+
+	// Determine if we should wrap based on forceWrap or natural length
+	let shouldWrap = forceWrap;
+	if (!shouldWrap) {
+		// Calculate total length to decide if wrapping is needed
+		let totalLength = 0;
+		for (const attr of attributes) {
+			const attrChildren = attr.children;
+			if (!attrChildren) continue;
+
+			const nameTokens = attrChildren.Name as Token[];
+			const stringTokens = attrChildren.STRING as Token[];
+
+			if (nameTokens && stringTokens) {
+				const attrName = nameTokens[0]?.image || '';
+				const attrValue = stringTokens[0]?.image || '';
+				totalLength += attrName.length + attrValue.length + 2; // = and space
+			}
+		}
+		// More conservative threshold for natural wrapping (100 characters)
+		shouldWrap = totalLength > 100;
+	}
 
 	for (const attr of attributes) {
 		const attrChildren = attr.children;
@@ -349,7 +515,7 @@ function convertAttributes(attributes: CstNode[]): Doc {
 		const attrValue = stringTokens[0]!.image;
 
 		if (!first) {
-			parts.push(line);
+			parts.push(shouldWrap ? hardline : line);
 		} else {
 			first = false;
 		}
@@ -358,7 +524,11 @@ function convertAttributes(attributes: CstNode[]): Doc {
 		parts.push(group([`${attrName}=`, value]));
 	}
 
-	return [indent([' ', softline, ...parts])];
+	if (shouldWrap) {
+		return [indent([' ', hardline, ...parts])];
+	} else {
+		return [indent([' ', softline, ...parts])];
+	}
 }
 
 function convertAttributeValue(value: string, attrName: string): Doc {

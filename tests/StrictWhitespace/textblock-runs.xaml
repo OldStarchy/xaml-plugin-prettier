@@ -1,0 +1,5 @@
+<Window>
+    <TextBlock>
+        <Run Text="Maximum Weight (" /><Run Text="{Binding WeightUnitLabel, Mode=OneWay}" /><Run Text=")" />
+    </TextBlock>
+</Window>
