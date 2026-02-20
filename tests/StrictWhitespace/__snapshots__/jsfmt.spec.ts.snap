@@ -87,17 +87,37 @@ exports[`mixed-length-runs.xaml 1`] = `
 
 exports[`textblock-runs.xaml 1`] = `
 <Window>
-    <TextBlock>
-        <Run Text="Maximum Weight (" /><Run Text="{Binding WeightUnitLabel, Mode=OneWay}" /><Run Text=")" />
-    </TextBlock>
+    <Grid>
+        <Grid Grid.Column="0">
+            <StackPanel Grid.Row="0">
+                <Label>
+                    <TextBlock>
+                        <Run Text="Maximum Weight (" /><Run Text="{Binding WeightUnitLabel, Mode=OneWay}" /><Run Text=")" />
+                    </TextBlock>
+                </Label>
+            </StackPanel>
+        </Grid>
+    </Grid>
 </Window>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 <Window>
-  <TextBlock>
-    <Run Text="Maximum Weight (" /><Run
-      Text="{Binding WeightUnitLabel, Mode=OneWay}"
-    /><Run Text=")" />
-  </TextBlock>
+  <Grid>
+    <Grid Grid.Column="0">
+      <StackPanel Grid.Row="0">
+        <Label>
+          <TextBlock>
+            <Run
+              Text="Maximum Weight ("
+            /><Run
+              Text="{Binding WeightUnitLabel, Mode=OneWay}"
+            /><Run
+              Text=")"
+            />
+          </TextBlock>
+        </Label>
+      </StackPanel>
+    </Grid>
+  </Grid>
 </Window>
 
 `;

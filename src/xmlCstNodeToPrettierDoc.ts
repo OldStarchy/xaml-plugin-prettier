@@ -1,7 +1,7 @@
 import { type CstNode, type IToken as Token } from 'chevrotain';
-import { doc, type Doc, type Printer } from 'prettier';
+import { doc, type Doc, type Printer, type RequiredOptions } from 'prettier';
 
-const { group, hardline, indent, line, softline } = doc.builders;
+const { group, hardline, indent, line, softline, ifBreak } = doc.builders;
 
 const empty: Doc = '';
 
@@ -18,7 +18,7 @@ function isPrettierIgnoreComment(comment: Token): string | null {
 }
 
 // Helper function to extract original text for a node from the source
-function getOriginalText(node: CstNode, options: any): string {
+function getOriginalText(node: CstNode, options: RequiredOptions): string {
 	const location = node.location;
 	if (!location) return '';
 
@@ -48,12 +48,16 @@ const xmlCstNodeToPrettierDoc: PrintFn = (path, options, _print): Doc => {
 export default xmlCstNodeToPrettierDoc;
 
 // Helper function to determine if an element needs wrapping due to long attributes
-function elementNeedsWrapping(element: CstNode): boolean {
+function elementNeedsWrapping(
+	element: CstNode,
+	options: RequiredOptions,
+): boolean {
 	const children = element.children;
 	if (!children) return false;
 
 	const elementName = (children.Name as Token[])?.[0]?.image || '';
 	const attributes = children.attribute as CstNode[];
+	const printWidth = options.printWidth || 80;
 
 	if (!attributes || attributes.length === 0) return false;
 
@@ -74,26 +78,31 @@ function elementNeedsWrapping(element: CstNode): boolean {
 		}
 	}
 
-	// Use a more conservative line length threshold (120 characters)
-	// and require multiple attributes or a very long single attribute
+	// Use appropriate thresholds with special handling for binding expressions
 	const hasMultipleAttributes = attributes.length > 1;
-	const hasVeryLongAttribute = attributes.some((attr) => {
+	const hasLongAttribute = attributes.some((attr) => {
 		const attrChildren = attr.children;
 		if (!attrChildren) return false;
 		const stringTokens = attrChildren.STRING as Token[];
-		return (stringTokens?.[0]?.image?.length ?? 0) > 60;
+		const attrValue = stringTokens?.[0]?.image || '';
+
+		// Special case: binding expressions should wrap at shorter length
+		if (attrValue.includes('{') && attrValue.includes('}')) {
+			return attrValue.length > printWidth * 0.45; // 45% of printWidth for binding expressions
+		}
+		return attrValue.length > printWidth * 0.75; // 75% of printWidth for regular attributes
 	});
 
 	return (
-		estimatedLength > 120 ||
-		(hasMultipleAttributes && estimatedLength > 80) ||
-		hasVeryLongAttribute
+		estimatedLength > printWidth * 1.5 || // 150% of printWidth
+		(hasMultipleAttributes && estimatedLength > printWidth) || // 100% of printWidth for multiple attrs
+		hasLongAttribute
 	);
 }
 
 function convertElement(
 	element: CstNode,
-	options: any,
+	options: RequiredOptions,
 	shouldIgnore: boolean = false,
 	forceWrap: boolean = false,
 ): Doc {
@@ -118,7 +127,7 @@ function convertElement(
 	const attributes = children.attribute as CstNode[];
 	const attrDoc =
 		attributes && attributes.length > 0
-			? convertAttributes(attributes, forceWrap)
+			? convertAttributes(attributes, forceWrap, options)
 			: null;
 
 	// Check if self-closing
@@ -218,7 +227,7 @@ function convertElement(
 						const shouldForceWrap = currentGroup.some(
 							(groupItem) => {
 								const element = groupItem.node as CstNode;
-								return elementNeedsWrapping(element);
+								return elementNeedsWrapping(element, options);
 							},
 						);
 
@@ -265,7 +274,7 @@ function convertElement(
 			if (currentGroup.length > 0) {
 				const shouldForceWrap = currentGroup.some((groupItem) => {
 					const element = groupItem.node as CstNode;
-					return elementNeedsWrapping(element);
+					return elementNeedsWrapping(element, options);
 				});
 
 				elementGroups.push({
@@ -476,31 +485,10 @@ function checkForEmptyLine(chardata: CstNode): boolean {
 function convertAttributes(
 	attributes: CstNode[],
 	forceWrap: boolean = false,
+	options?: RequiredOptions,
 ): Doc {
 	const parts: Doc[] = [];
 	let first = true;
-
-	// Determine if we should wrap based on forceWrap or natural length
-	let shouldWrap = forceWrap;
-	if (!shouldWrap) {
-		// Calculate total length to decide if wrapping is needed
-		let totalLength = 0;
-		for (const attr of attributes) {
-			const attrChildren = attr.children;
-			if (!attrChildren) continue;
-
-			const nameTokens = attrChildren.Name as Token[];
-			const stringTokens = attrChildren.STRING as Token[];
-
-			if (nameTokens && stringTokens) {
-				const attrName = nameTokens[0]?.image || '';
-				const attrValue = stringTokens[0]?.image || '';
-				totalLength += attrName.length + attrValue.length + 2; // = and space
-			}
-		}
-		// More conservative threshold for natural wrapping (100 characters)
-		shouldWrap = totalLength > 100;
-	}
 
 	for (const attr of attributes) {
 		const attrChildren = attr.children;
@@ -515,7 +503,7 @@ function convertAttributes(
 		const attrValue = stringTokens[0]!.image;
 
 		if (!first) {
-			parts.push(shouldWrap ? hardline : line);
+			parts.push(forceWrap ? hardline : line);
 		} else {
 			first = false;
 		}
@@ -524,7 +512,7 @@ function convertAttributes(
 		parts.push(group([`${attrName}=`, value]));
 	}
 
-	if (shouldWrap) {
+	if (forceWrap) {
 		return [indent([' ', hardline, ...parts])];
 	} else {
 		return [indent([' ', softline, ...parts])];
