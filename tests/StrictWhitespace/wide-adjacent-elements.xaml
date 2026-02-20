@@ -1,0 +1,17 @@
+<Root>
+  <!-- Test with very long attribute values that should force wrapping -->
+  <VeryLongElementNameThatShouldForceWrapping SomeVeryLongAttributeName="This is a very long attribute value that should definitely cause the formatter to wrap the line because it exceeds reasonable line length limits" /><AnotherVeryLongElementNameThatShouldAlsoForceWrapping AnotherVeryLongAttributeName="Another extremely long attribute value that will make this line way too long to fit on a single line in most reasonable formatting scenarios" />
+
+  <!-- Test with multiple adjacent elements with long attributes -->
+  <FirstElement VeryLongAttribute="This attribute value is intentionally very long to force line wrapping behavior in the prettier formatter" /><SecondElement AnotherLongAttribute="This is another long attribute that should cause wrapping" /><ThirdElement YetAnotherLongAttribute="And this is a third long attribute value" />
+
+  <!-- Test with nested elements that have long content -->
+  <ContainerWithVeryLongNameThatExceedsReasonableLineLengths>
+    <ChildElementWithLongName AttributeWithVeryLongName="Long attribute value here" /><AnotherChildElementWithLongName AnotherAttributeWithVeryLongName="Another long attribute value that should cause wrapping" />
+  </ContainerWithVeryLongNameThatExceedsReasonableLineLengths>
+
+  <!-- Test with nested non-self-closing elements that have long content -->
+  <ContainerWithVeryLongNameThatExceedsReasonableLineLengths>
+    <ChildElementWithLongName AttributeWithVeryLongName="Long attribute value here">Foo bar baz</ChildElementWithLongName><AnotherChildElementWithLongName AnotherAttributeWithVeryLongName="Another long attribute value that should cause wrapping">More content here</AnotherChildElementWithLongName>
+  </ContainerWithVeryLongNameThatExceedsReasonableLineLengths>
+</Root>

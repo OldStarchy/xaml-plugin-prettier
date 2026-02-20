@@ -147,7 +147,15 @@ function convertElement(
 				const item = items[i]!;
 
 				if (item.type === 'element') {
-					contentParts.push(softline);
+					// Check if this element is adjacent to a previous element
+					// (i.e., no text content between them)
+					const isAdjacentToElement =
+						i > 0 && items[i - 1]!.type === 'element';
+
+					// Only add softline if this is not adjacent to another element
+					if (!isAdjacentToElement) {
+						contentParts.push(softline);
+					}
 					contentParts.push(
 						convertElement(
 							item.node as CstNode,
@@ -159,7 +167,14 @@ function convertElement(
 					nextElementShouldIgnore = false;
 				} else if (item.type === 'comment') {
 					const commentToken = item.node as Token;
-					contentParts.push(softline);
+					// Check if this comment is adjacent to a previous element
+					const isAdjacentToElement =
+						i > 0 && items[i - 1]!.type === 'element';
+
+					// Only add softline if this is not adjacent to another element
+					if (!isAdjacentToElement) {
+						contentParts.push(softline);
+					}
 					contentParts.push(commentToken.image);
 
 					// Check if this comment is a prettier-ignore directive

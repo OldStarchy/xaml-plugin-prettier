@@ -1,0 +1,21 @@
+<Root>
+  <!-- Test 1: Adjacent self-closing elements -->
+  <Foo /><Bar /><Baz />
+
+  <!-- Test 2: Mix of self-closing and regular elements -->
+  <First />
+  <Second>Content</Second><Third />
+
+  <!-- Test 3: Elements with text content between them (should have normal spacing) -->
+  <Text>Some text</Text>
+  More text here
+  <AnotherText>More content</AnotherText>
+
+  <!-- Test 4: Nested adjacent elements -->
+  <Container><Child1 /><Child2 /></Container>
+
+  <!-- Test 5: TextBlock example from user's description -->
+  <TextBlock>
+    <Run Text="Something (" /><Run Text="{Binding Foo}" /><Run Text=")" />
+  </TextBlock>
+</Root>
