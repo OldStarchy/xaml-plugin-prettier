@@ -5,10 +5,10 @@ import printer from "./printer.js";
 const plugin = {
   languages,
   parsers: {
-    xml: parser
+    xaml: parser
   },
   printers: {
-    xml: printer
+    xaml: printer
   },
   options: {
     xmlSelfClosingSpace: {

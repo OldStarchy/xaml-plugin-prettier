@@ -11,7 +11,7 @@ const code = fs.existsSync(process.argv[2])
 
 const options = {
   cursorOffset: 10,
-  parser: "xml",
+  parser: "xaml",
   plugins: [plugin],
   xmlWhitespaceSensitivity: "ignore",
   embeddedLanguageFormatting: "auto"

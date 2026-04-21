@@ -13,7 +13,7 @@
   },
   "scripts": {
     "lint": "eslint --cache .",
-    "prepare": "node bin/languages.js && husky install",
+    "prepare": "husky install",
     "print": "prettier --plugin=./src/plugin.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
