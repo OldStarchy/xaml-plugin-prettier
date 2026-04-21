@@ -286,7 +286,7 @@ const parser = {
     // Otherwise return the CST.
     return simplifyCST(cst);
   },
-  astFormat: "xml",
+  astFormat: "xaml",
   locStart(node) {
     return node.location.startOffset;
   },

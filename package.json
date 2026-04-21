@@ -1,7 +1,7 @@
 {
-  "name": "@prettier/plugin-xml",
+  "name": "xaml-plugin-prettier",
   "version": "3.4.2",
-  "description": "prettier plugin for XML",
+  "description": "prettier plugin for XAML",
   "type": "module",
   "main": "src/plugin.js",
   "exports": {
@@ -13,20 +13,20 @@
   },
   "scripts": {
     "lint": "eslint --cache .",
-    "prepare": "node bin/languages.js && husky install",
+    "prepare": "husky install",
     "print": "prettier --plugin=./src/plugin.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/prettier/plugin-xml.git"
+    "url": "git+https://github.com/OldStarchy/xaml-plugin-prettier.git"
   },
   "author": "Kevin Newton",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/prettier/plugin-xml/issues"
+    "url": "https://github.com/OldStarchy/xaml-plugin-prettier/issues"
   },
-  "homepage": "https://github.com/prettier/plugin-xml#readme",
+  "homepage": "https://github.com/OldStarchy/xaml-plugin-prettier#readme",
   "dependencies": {
     "@xml-tools/parser": "^1.0.11"
   },

@@ -6,7 +6,7 @@ function format(content, opts = {}) {
 
   return prettier.format(content, {
     ...opts,
-    parser: "xml",
+    parser: "xaml",
     plugins: [...plugins, plugin]
   });
 }
