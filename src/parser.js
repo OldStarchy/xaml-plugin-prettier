@@ -16,6 +16,89 @@ function createError(message, options) {
   return Object.assign(error, options);
 }
 
+// Parses a string of the form {Ctor arg1=val1, arg2=val2, ...} and produces a DocTree
+// handles values that are nested bindings themselves
+function parseObjectSyntax(str) {
+  let pos = 0;
+
+  if (str[pos] !== "{") {
+    return str;
+  }
+
+  pos++; // skip {
+
+  let ctor = "";
+  while (pos < str.length && /[a-zA-Z0-9_:]/.test(str[pos])) {
+    ctor += str[pos];
+    pos++;
+  }
+
+  // Skip whitespace
+  while (pos < str.length && /\s/.test(str[pos])) {
+    pos++;
+  }
+
+  // Splits on commas that are not inside nested {}
+  const parts = [];
+  let currentPart = "";
+  let braceLevel = 0;
+
+  while (pos < str.length) {
+    const char = str[pos];
+
+    if (char === "{") {
+      braceLevel++;
+    } else if (char === "}") {
+      if (braceLevel === 0) {
+        break;
+      }
+      braceLevel--;
+    } else if (char === "," && braceLevel === 0) {
+      parts.push(currentPart.trim());
+      currentPart = "";
+      pos++;
+      continue;
+    }
+
+    currentPart += char;
+    pos++;
+  }
+
+  if (currentPart.trim() !== "") {
+    parts.push(currentPart.trim());
+  }
+
+  // Check if we should wrap based on length
+  // If there are multiple parts (comma-separated), we should wrap
+  // For single parts, we wrap based on line length fitting
+  const hasMultipleParts = parts.length > 1;
+
+  if (parts.length === 0) {
+    return { ctor };
+  }
+
+  const partNodes = parts.map((part) => {
+    if (!part.includes("={")) {
+      return part;
+    }
+
+    const eqIndex = part.indexOf("=");
+    const key = part.substring(0, eqIndex);
+    const value = part.substring(eqIndex + 1);
+    return { Name: key, EQUALS: "=", Value: parseObjectSyntax(value) };
+  });
+
+  return { ctor, parts: partNodes, hasMultipleParts };
+}
+
+function parseAttributeValue(value) {
+  if (/^"\{[^"]*\}"$|^'\{[^']*\}'$/.test(value)) {
+    return parseObjectSyntax(value.slice(1, -1));
+  }
+
+  return null;
+}
+
 function simplifyCST(node) {
   switch (node.name) {
     case "attribute": {
@@ -26,6 +109,7 @@ function simplifyCST(node) {
         Name: Name[0].image,
         EQUALS: EQUALS[0].image,
         STRING: STRING[0].image,
+        ObjectConstructor: parseAttributeValue(STRING[0].image),
         location: node.location
       };
     }

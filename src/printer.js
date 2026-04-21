@@ -78,8 +78,58 @@ function printIToken(path) {
   };
 }
 
+function printObjectConstructor(objectConstructor) {
+  if (typeof objectConstructor === "string") {
+    return objectConstructor;
+  }
+
+  const { ctor, parts, hasMultipleParts } = objectConstructor;
+
+  if (!parts || parts.length === 0) {
+    return ["{", ctor, "}"];
+  }
+
+  return group([
+    "{",
+    ctor,
+    indent([
+      line,
+      join(
+        [",", line],
+        parts.map((part) => {
+          if (typeof part === "string") {
+            return part;
+          }
+
+          const { Name, EQUALS, Value } = part;
+          return [Name, EQUALS, group(printObjectConstructor(Value))];
+        })
+      )
+    ]),
+    softline,
+    "}"
+  ]);
+}
+
 function printAttribute(path, opts, print) {
-  const { Name, EQUALS, STRING } = path.node;
+  const { Name, EQUALS, STRING, ObjectConstructor } = path.node;
+
+  if (ObjectConstructor) {
+    const quoteType =
+      opts.xmlQuoteAttributes === "double"
+        ? '"'
+        : opts.xmlQuoteAttributes === "single"
+          ? "'"
+          : STRING[0];
+    // TODO assert no quotes in constructor
+    return [
+      Name,
+      EQUALS,
+      quoteType,
+      printObjectConstructor(ObjectConstructor),
+      quoteType
+    ];
+  }
 
   let attributeValue;
   if (opts.xmlQuoteAttributes === "double") {

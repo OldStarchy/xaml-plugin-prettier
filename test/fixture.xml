@@ -106,5 +106,31 @@
   <NoEscapeNeeded name="Pete 'Maverick' Mitchell"/>
 
   <xsl:text>slide </xsl:text>
+
+  <!-- attribute object expressions -->
+  <div>
+    <div>
+      <div attr="{Binding Foo}">
+        <div>
+          <div>
+            <div>
+              <div>
+                <div>
+                  <div>
+                    <div attr="{Binding Foo}" />
+                    <div attr="{Binding Foo, Mode=OneWay}" />
+                    <div attr="{Binding Foo, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <div attr="{Binding Foo, Converter={StaticResource MyConverter}}" />
+                    <div attr="{Binding Foo, Converter={StaticResource MyConverter}, ConverterParameter=SomeParameter}" />
+                    <div attr="{Binding Foo, Converter={StaticResource MyConverter}, ConverterParameter={StaticResource MyConverter={StaticResource MyConverter}, MyConverter={StaticResource MyConverter}}}" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </svg>
 <!-- bar -->
