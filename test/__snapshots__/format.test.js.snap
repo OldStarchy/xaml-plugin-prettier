@@ -137,6 +137,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -316,6 +318,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}"/>
+                    <div attr="{not a binding} {}"/>
                     <div attr="{Binding Foo}"/>
                     <div attr="{Binding Foo, Mode=OneWay}"/>
                     <div
@@ -456,7 +460,7 @@ use {
       android:b="b"
       xmlns="highest priority"
       android:a="a"
-    > 
+    >
       <bar
         xmlns:otherTools="otherToolsURI"
         ios:d="d"
@@ -491,6 +495,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -707,6 +713,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -851,7 +859,7 @@ use {
       android:b="b"
       xmlns="highest priority"
       android:a="a"
-    > 
+    >
       <bar
         xmlns:otherTools="otherToolsURI"
         ios:d="d"
@@ -886,6 +894,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -1030,7 +1040,7 @@ use {
       android:b="b"
       xmlns="highest priority"
       android:a="a"
-    > 
+    >
       <bar
         xmlns:otherTools="otherToolsURI"
         ios:d="d"
@@ -1065,6 +1075,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -1209,7 +1221,7 @@ use {
       android:b='b'
       xmlns='highest priority'
       android:a='a'
-    > 
+    >
       <bar
         xmlns:otherTools='otherToolsURI'
         ios:d='d'
@@ -1244,6 +1256,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr='{} {not a binding}' />
+                    <div attr='{not a binding} {}' />
                     <div attr='{Binding Foo}' />
                     <div attr='{Binding Foo, Mode=OneWay}' />
                     <div
@@ -1432,6 +1446,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}"/>
+                    <div attr="{not a binding} {}"/>
                     <div attr="{Binding Foo}"/>
                     <div attr="{Binding Foo, Mode=OneWay}"/>
                     <div
@@ -1576,7 +1592,7 @@ use {
       tools:other="thing"
       here="!"
       some="non-ns-ed-attributes"
-    > 
+    >
       <bar
         xmlns:otherTools="otherToolsURI"
         android:b="b"
@@ -1611,6 +1627,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -1799,6 +1817,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div
@@ -1980,6 +2000,8 @@ use {
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div

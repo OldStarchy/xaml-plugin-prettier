@@ -22,7 +22,7 @@ function parseObjectSyntax(str) {
   let pos = 0;
 
   if (str[pos] !== "{") {
-    return str;
+    return null;
   }
 
   pos++; // skip {
@@ -31,6 +31,10 @@ function parseObjectSyntax(str) {
   while (pos < str.length && /[a-zA-Z0-9_:]/.test(str[pos])) {
     ctor += str[pos];
     pos++;
+  }
+
+  if (ctor === "") {
+    return null;
   }
 
   // Skip whitespace
@@ -43,7 +47,10 @@ function parseObjectSyntax(str) {
   let currentPart = "";
   let braceLevel = 0;
 
-  while (pos < str.length) {
+  while (true) {
+    if (pos >= str.length) {
+      return null;
+    }
     const char = str[pos];
 
     if (char === "{") {
@@ -62,6 +69,13 @@ function parseObjectSyntax(str) {
 
     currentPart += char;
     pos++;
+  }
+
+  if (pos < str.length - 1) {
+    const tail = str.slice(pos + 1).trim();
+    if (tail !== "") {
+      return null;
+    }
   }
 
   if (currentPart.trim() !== "") {
@@ -85,7 +99,7 @@ function parseObjectSyntax(str) {
     const eqIndex = part.indexOf("=");
     const key = part.substring(0, eqIndex);
     const value = part.substring(eqIndex + 1);
-    return { Name: key, EQUALS: "=", Value: parseObjectSyntax(value) };
+    return { Name: key, EQUALS: "=", Value: parseObjectSyntax(value) ?? value };
   });
 
   return { ctor, parts: partNodes, hasMultipleParts };

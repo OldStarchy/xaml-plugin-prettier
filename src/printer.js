@@ -1,5 +1,6 @@
 import * as doc from "prettier/doc";
 import embed from "./embed.js";
+import { format } from "prettier";
 
 const { fill, group, hardline, indent, join, line, literalline, softline } =
   doc.builders;
@@ -122,13 +123,28 @@ function printAttribute(path, opts, print) {
           ? "'"
           : STRING[0];
     // TODO assert no quotes in constructor
-    return [
+    const result = [
       Name,
       EQUALS,
       quoteType,
       printObjectConstructor(ObjectConstructor),
       quoteType
     ];
+    const str = doc.printer.printDocToString(
+      printObjectConstructor(ObjectConstructor),
+      { printWidth: Infinity, tabWidth: 1, useTabs: false }
+    ).formatted;
+
+    if (
+      str.replace(/[\s\n]+/g, "") !==
+      STRING.slice(1, -1).replace(/[\s\n]+/g, "")
+    ) {
+      console.error(
+        `The printed object constructor did not match the original string. Original: ${STRING}, Printed: ${str}`
+      );
+    } else {
+      return result;
+    }
   }
 
   let attributeValue;

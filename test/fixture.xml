@@ -83,7 +83,7 @@
       tools:other="thing"
       android:b="b"
       xmlns="highest priority"
-      android:a="a"> 
+      android:a="a">
       <bar
         xmlns:otherTools="otherToolsURI"
         ios:d="d"
@@ -117,6 +117,8 @@
               <div>
                 <div>
                   <div>
+                    <div attr="{} {not a binding}" />
+                    <div attr="{not a binding} {}" />
                     <div attr="{Binding Foo}" />
                     <div attr="{Binding Foo, Mode=OneWay}" />
                     <div attr="{Binding Foo, Mode=OneWay, UpdateSourceTrigger=PropertyChanged}" />
