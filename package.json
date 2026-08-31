@@ -39,7 +39,7 @@
     "eslint-config-prettier": "^10.0.2",
     "globals": "^17.11.0",
     "husky": "^9.0.6",
-    "jest": "^30.4.2",
+    "jest": "^30.5.0",
     "linguist-languages": "^9.4.0",
     "lint-staged": "^17.4.1",
     "prettier": "^3.9.6"
