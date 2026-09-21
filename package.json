@@ -42,7 +42,7 @@
     "jest": "^30.5.2",
     "linguist-languages": "^9.5.0",
     "lint-staged": "^17.5.1",
-    "prettier": "^3.9.6"
+    "prettier": "^3.9.8"
   },
   "jest": {
     "testRegex": ".test.js$",
