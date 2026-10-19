@@ -28,7 +28,7 @@
   },
   "homepage": "https://github.com/OldStarchy/xaml-plugin-prettier#readme",
   "dependencies": {
-    "@xml-tools/parser": "^1.0.11"
+    "@xml-tools/parser": "^1.0.12"
   },
   "peerDependencies": {
     "prettier": "^3.0.0"
